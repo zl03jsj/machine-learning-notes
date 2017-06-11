@@ -1,0 +1,62 @@
+在linux(ubuntu)下搭建python的机器学习环境
+ubuntu自带python2.7
+
+安装python科学计算包:
+sudo apt-get install python-numpy python-scipy python-matplotlib ipython ipython-notebook python-pandas python-sympy python-nose 
+
+安装opencv
+https://github.com/opencv/opencv/archive/3.2.0.zip 下载源代码,得到opencv-3.2.0.zip
+unzip -o -d ./ ./opencv-3.2.0.zip
+cd opencv.3.2.0
+mkdir release
+cmake -D CMAKE_BUILD_TYPE=RELEASE -D CMAKE_INSTALL_PREFIX=/usr/local ..
+make
+sudo make install
+
+cmake 这一步, 它会自动下载一些依赖包,特别是ippicv_linux_20151201.tgz, 经常提示下载失败: 
+如果总是下载失败, 则手动下载, 下载地址:
+https://raw.githubusercontent.com/Itseez/opencv_3rdparty/81a676001ca8075ada498583e4166079e5744668/ippicv/ippicv_linux_20151201.tgz
+然后运行命令, 主要作用是计算文件的hash校验码,然后根据校验码创建目录, 再拷贝进去:
+pp_file=../ippicv_linux_20151201.tgz              &&
+ipp_hash=$(md5sum $ipp_file | cut -d" " -f1)      &&
+ipp_dir=3rdparty/ippicv/downloads/linux-$ipp_hash && 
+mkdir -p $ipp_dir &&
+cp $ipp_file $ipp_dir
+
+然后,重新进入release目录,重新执行命令.
+
+更简单一点,你可以直接在opencv源代码目录创建:
+mkdir opencv-3.2.0/3rdparty/ippicv/downloads/Linux-808b791a6eac9ed78d32a7666804320e
+cp ./ippicv_linux_20151201.tgz ./opencv-3.2.0/3rdparty/ippicv/downloads/Linux-808b791a6eac9ed78d32a7666804320e/
+
+然后重新执行编译命令.
+
+--------------------------------------------------
+安装mlpy(基于Numpy/Scipy和GLS[GNU Scientific Library]构建的python模块)
+所以首先安装GSL:
+sudo apt-get install libgsl-dev
+
+mlpy下载地址:
+https://sourceforge.net/projects/mlpy/files/ 
+
+下载:mlpy-3.5.0.tar.gz后,执行命令:
+tar -xf 
+cd mlpy-3.5.0
+sudo python ./setup.py install
+
+
+安装BeautifulSoup(HTML/XML解析库)
+http://www.crummy.com/software/BeautifulSoup/
+或者:
+sudo apt-get install python-bs4
+
+
+安装Neurolab(我靠, 这是神经网络库), 下载地址:
+http://code.google.com/p/neurolab/downloads/list(自己翻墙下载吧,^_^)
+然后运行:
+python setup.py install
+
+最后安装R:
+sudo apt-get update
+sudo apt-get install r-base
+sudo apt-get install r-base-dev
