@@ -20,11 +20,9 @@ def light_image(img, multiple):
     shape = img.shape
     for x in np.arange(0, shape[0]):
         for y in np.arange(0, shape[1]):
-            r, g, b = img[x, y, 0], img[x, y, 1], img[x, y, 2]
-            r = color_calculate(multiple, r)
-            g = color_calculate(multiple, g)
-            b = color_calculate(multiple, b)
-            img[x, y, 0], img[x, y, 1], img[x, y, 2] = r, g, b
+            img[x, y, 0] = color_calculate(multiple, img[x, y, 0])
+            img[x, y, 1] = color_calculate(multiple, img[x, y, 1])
+            img[x, y, 2] = color_calculate(multiple, img[x, y, 2])
 
 
 def gray_image(img):
