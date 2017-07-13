@@ -62,7 +62,7 @@ print 'a\'s dtype = ', a.dtype, ', ndim = ', a.ndim, ', shape = ', a.shape, ', s
 print 'a\'s dtype = ', a.dtype, ', each item size = ', a.itemsize, ', data cache = ', a.data
 
 print '................'
-a = np.array( [[1,2], [3, 4] ], dtype=complex)
+a = np.array([[1, 2], [3, 4]], dtype=complex)
 print 'a = ', a
 print 'a\'s dtype = ', a.dtype, ', ndim = ', a.ndim, ', shape = ', a.shape, ', size = ', a.size
 print 'a\'s dtype = ', a.dtype, ', each item size = ', a.itemsize, ', data cache = ', a.data
