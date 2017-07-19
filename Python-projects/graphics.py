@@ -1,4 +1,4 @@
-import cv2;
+import cv2
 
 def showImage(imgfilename):
     print "zl's open image function"

@@ -114,15 +114,36 @@ def do_image_magic(img, f):
 
     print '-----------do_image_magic-----------'
 
+def transporion_image(img):
+    w = img.shape[1]
+    h = img.shape[0]
+    tmp_image = np.zeros((w, h, 3), np.uint8)
+    for i in np.arange(0, w):
+        tmp_image[i, 0:h, :] = img[0:h, i, :]
+    return tmp_image
+
+def fusion_image(img1, img2):
+    w = min(img1.shape[1], img2.shape[1])
+    h = min(img1.shape[0], img2.shape[1])
+    for x in range(0, w, 1):
+        for y in range(0, h, 1):
+            img2[y, x, :] = (img2[y, x, :] * 0.9) + img1[y, x, :] * 0.1
+
 imagefile = "lenna.jpg"
 image = cv2.imread(imagefile)
+cityimage = cv2.imread("city.jpg")
 
-i = 1
-for f in filters:
-    tmpimage = image.copy()
-    do_image_magic(tmpimage, f)
-    cv2.imshow("filter=" + str(i), tmpimage)
-    i += 1
+# tmpimage = transporion_image(image)
+
+fusion_image(image, cityimage)
+
+cv2.imshow("magic image", cityimage)
+# i = 1
+# for f in filters:
+#     tmpimage = image.copy()
+#     do_image_magic(tmpimage, f)
+#     cv2.imshow("filter=" + str(i), tmpimage)
+#     i += 1
 
 # cv2.imshow("image magic", image)
 #
