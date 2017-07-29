@@ -14,6 +14,7 @@ def draw_wav(wavfile):
     utils.print_line('begin draw wav')
     params = wavfile.getparams()
     # (声道数, 采样精度, 采样率, 帧数，......
+    print params
     nchannels, sampwidth, framerate, nframes = params[:4]
     str_data = wavfile.readframes(nframes)
     wave_data = np.fromstring(str_data, dtype=np.short)
@@ -32,7 +33,7 @@ def draw_wav(wavfile):
 
     plt.subplot(2, 1, 1)
     plt.plot(time, wave_data[0])
-    plt.subplot(212)
+    plt.subplot(2, 1, 2)
     plt.plot(time, wave_data[1], c="g")
     plt.xlabel("time (seconds)")
     plt.show()
@@ -60,6 +61,8 @@ def wav_hide_information(message):
     count = 0
     rand = np.random.rand(nframe)
 
+    print "rand is:", rand
+
     utils.print_line('encrypt chars begin')
     for curpos in xrange(0, nframe):
         if curpos%interval == 0 and count<mdata.__len__():
@@ -76,7 +79,16 @@ def wav_hide_information(message):
     utils.print_line('encrypt chars end')
     return wav_data
 
-print interval
+def write_wav(wav, filepath):
+    wav_outfile = wave.open(filepath, "wb")
+    stringdata = wav.tostring()
+    wav_outfile.setnchannels(nchannels)
+    wav_outfile.setframerate(framerate)
+    wav_outfile.setsampwidth(sampwidth)
+    wav_outfile.setnframes(framerate * n_cycle)
+    wav_outfile.writeframes(stringdata)
+    wav_outfile.close()
+
 
 def wav_get_hiden_message(wav_data, lmsg):
     len = wav_data.__len__()
@@ -103,13 +115,22 @@ def gen_noise_wav(message):
     return wav_data
 
 
-wavfilename = "./res/back.wav"
-f = wave.open(wavfilename, "rb")
+# wavfilename = "./res/back.wav"
+# f = wave.open(wavfilename, "rb")
+# draw_wav(f)
+
+
+
+wavfilename = "./res/noiseWave.wav"
 
 hide_string = "i love you!!!!!"
 wav = wav_hide_information(hide_string)
-uncrypt_message = wav_get_hiden_message(wav, hide_string.__len__())
-print "the hide information is:", uncrypt_message
+write_wav(wav, wavfilename)
 
-# draw_wav(f)
+f = wave.open(wavfilename, "rb")
+draw_wav(f)
+
+uncrypt_message = wav_get_hiden_message(wav, hide_string.__len__())
+
+print "the hide information is:", uncrypt_message
 
