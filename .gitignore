@@ -1,3 +1,5 @@
 .idea/
 *.pyc
+*.rdata
+*.swp
 noiseWave.wav
