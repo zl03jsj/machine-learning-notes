@@ -23,8 +23,7 @@ x[i]
 x[i] = 123
 
 # 数组转换为向量
-x <- as.vector(x)
-
+x <- as.vector(x) 
 
 show_default_split("matrix")
 
@@ -53,3 +52,59 @@ print(cbind(arr1, arr2))
 print(rbind(arr1, arr2))
 
 show_default_split("matrix arithmetic")
+
+# matrix translation
+mya <- array(1:10, dim=c(2, 5))
+print(mya)
+print(t(mya))
+print("aperm(mya, perm=c(2,1,3))")
+print(aperm(mya, perm=c(2,1,3)))
+
+mya <- array(1:24, dim=c(2, 3, 4))
+mya
+show_default_split('aperm, 这个函数真的有点绕, 只可意会不可言传...')
+print(aperm(mya, perm=c(3,1,2))) 
+
+b <- array(c(5:6))
+
+# 内积 transvection(scaler product)
+a %o% b
+outer(a, b, "*") 
+
+a <- array(1:9, dim=c(3,3))
+b <- array(0:8, dim=c(3,3)) 
+a %*% b 
+crossprod(a, b) 
+t(a) %*% b      
+
+# 计算线性方程组的解 Solutions of Linear Equations
+# a %*% x = b,下面的示例计算 x, 其中a为系数矩阵; b为常数项, 
+# 如果b缺失, 则默认为单位矩阵
+a <- array(1:4, dim=c(2,2))
+b <- c(5, 8) 
+solve(a, b) 
+
+# 矩阵的逆矩阵, 当solve第二个参数为单位矩阵,或第二个参数不存在的时候
+# solve就是计算逆矩阵
+b <- diag(2) # 创建单位矩阵 
+solve(a, b)  
+a %*% solve(a)
+
+# 矩阵的特征值和特征向量[本征值和本征向量](eigen value & eigen vector)
+a <- array(c(1:16), dim=c(4, 4))
+b <- a
+# 把b设置为对称矩阵, 
+for( i in 1:(dim(b)[1]-1) ) 
+    for(j in (i+1) : (dim(b)[1]) )
+        b[i, j] = b[j, i]   
+# eigen 函数,计算本征值和本征向量, 第二个参数指定, 是否假设matrix为对称矩阵,
+# 如果指定为TRUE, 则只使用左下角(包含对角线)的值
+identical( eigen(a)["vecjtors"], eigen(b)["vectors"] )
+identical( eigen(a, TRUE)["vectors"], eigen(b)["vectors"] )
+
+# 计算矩阵的行列式
+a <- array(1:4, dim=c(2,2))
+det(a)
+
+# 奇异矩阵
+

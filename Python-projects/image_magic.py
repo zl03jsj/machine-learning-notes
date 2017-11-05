@@ -133,24 +133,24 @@ imagefile = "lenna.jpg"
 image = cv2.imread(imagefile)
 cityimage = cv2.imread("city.jpg")
 
-# tmpimage = transporion_image(image)
+tmpimage = transporion_image(image)
 
-fusion_image(image, cityimage)
+# fusion_image(image, cityimage)
 
-cv2.imshow("magic image", cityimage)
-# i = 1
-# for f in filters:
-#     tmpimage = image.copy()
-#     do_image_magic(tmpimage, f)
-#     cv2.imshow("filter=" + str(i), tmpimage)
-#     i += 1
+# cv2.imshow("magic image", cityimage)
+i = 1
+for f in filters:
+    tmpimage = image.copy()
+    do_image_magic(tmpimage, f)
+    cv2.imshow("filter=" + str(i), tmpimage)
+    i += 1
 
-# cv2.imshow("image magic", image)
-#
-# do_image_magic(image, sharpness_filter_12)
-# do_image_magic(image, sharpness_filter_12)
-#
-# cv2.imshow("image magic show!!!![filter=", image)
+cv2.imshow("image magic", image)
+
+do_image_magic(image, sharpness_filter_12)
+do_image_magic(image, sharpness_filter_12)
+
+cv2.imshow("image magic show!!!![filter=", image)
 
 cv2.waitKey()
 cv2.destroyAllWindows()
