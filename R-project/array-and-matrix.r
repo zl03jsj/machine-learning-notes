@@ -7,7 +7,7 @@ my_num <- c(11,22,34,71,14,68,21,22,11,34)
 dim(my_num) <- c(2,5)
 
 #切片
-my_num[c(1,2,3)] 
+my_num[c(1,2,3)] G
 c(my_num[1], my_num[4])
 my_num[2,]
 my_num[6]
@@ -99,12 +99,20 @@ for( i in 1:(dim(b)[1]-1) )
         b[i, j] = b[j, i]   
 # eigen 函数,计算本征值和本征向量, 第二个参数指定, 是否假设matrix为对称矩阵,
 # 如果指定为TRUE, 则只使用左下角(包含对角线)的值
-identical( eigen(a)["vecjtors"], eigen(b)["vectors"] )
+# identical函数 比两个矩阵是否相等
+identical( eigen(a)["vectors"], eigen(b)["vectors"] )
 identical( eigen(a, TRUE)["vectors"], eigen(b)["vectors"] )
 
 # 计算矩阵的行列式
 a <- array(1:4, dim=c(2,2))
 det(a)
 
-# 奇异矩阵
-
+# 计算 矩阵乘以向量组成的矩阵的结果等于
+# 矩阵分别乘以向量以后再组成的矩阵
+a <- array(1:4, dim=c(2, 2)) 
+b <- array(c(2,10), dim=c(2, 1))
+c <- array(c(5,6),  dim=c(2, 1)) 
+d <- array(c(b, c), dim=c(2, 2)) 
+a %*% b
+a %*% c 
+a %*% d
