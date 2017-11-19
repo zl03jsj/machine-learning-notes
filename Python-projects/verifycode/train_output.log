@@ -1,0 +1,49 @@
+mode: L; enhance:2.0; h:0.5; dh:0.15
+imgname: result
+img/origin2/选区_001.jpg: error
+0.000 0/1
+img/origin2/选区_002.jpg: error
+0.000 0/2
+img/origin2/选区_011.jpg: error
+0.000 0/3
+accuracy: 0.00
+mode: L; enhance:2.0; h:0.5; dh:0.15
+imgname: result
+mode: L; enhance:2.0; h:0.5; dh:0.15
+imgname: result
+img/origin2/001.jpg: error
+0.000 0/1
+mode: L; enhance:2.0; h:0.5; dh:0.15
+imgname: result
+mode: L; enhance:2.0; h:0.5; dh:0.15
+imgname: result
+mode: L; enhance:2.0; h:0.5; dh:0.15
+imgname: result
+mode: L; enhance:2.0; h:0.5; dh:0.15
+imgname: result
+mode: L; enhance:2.0; h:0.5; dh:0.15
+imgname: result
+mode: L; enhance:2.0; h:0.5; dh:0.15
+imgname: result
+mode: L; enhance:2.0; h:0.5; dh:0.15
+imgname: result
+mode: L; enhance:2.0; h:0.5; dh:0.15
+imgname: result
+mode: L; enhance:2.0; h:0.5; dh:0.15
+imgname: result
+img/origin2/001.jpg: error
+0.000 0/1
+img/origin2/002.jpg: error
+0.000 0/2
+img/origin2/003.jpg: error
+0.000 0/3
+accuracy: 0.00
+mode: L; enhance:2.0; h:0.5; dh:0.15
+imgname: result
+img/origin2/001.jpg: error
+0.000 0/1
+img/origin2/002.jpg: error
+0.000 0/2
+img/origin2/003.jpg: error
+0.000 0/3
+accuracy: 0.00

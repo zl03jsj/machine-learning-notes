@@ -41,7 +41,7 @@ def v2_image(img, upvalue):
 
 
 def noise_image(img, count):
-    for n in xrange(0, count):
+    for n in range(0, count):
         x = np.random.randint(0, img.shape[0], dtype=np.int16)
         y = np.random.randint(0, img.shape[1], dtype=np.int16)
         img[x, y] = np.random.randint(0, 255)
