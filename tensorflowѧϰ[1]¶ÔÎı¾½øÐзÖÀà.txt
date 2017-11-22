@@ -1,0 +1,6 @@
+http://blog.topspeedsnail.com/archives/10399
+
+python 安装nltk（自然语言工具库 Natural Language Toolkit） 
+$ pip install nltk
+
+$ pip install captcha
