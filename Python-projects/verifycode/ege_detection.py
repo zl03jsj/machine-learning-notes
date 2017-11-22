@@ -1,10 +1,10 @@
 import numpy as np
-
 import cv2 as cv
 import matplotlib.pyplot as plt
 from PIL import Image
 
-res_path = 'img/origin2/'
+res_path = 'img/origin/'
+
 
 def show_canny():
     low_threshold = 50
@@ -28,7 +28,6 @@ def show_canny():
         cv.destroyAllWindows()
 
 
-
 def mser_text_detect(img):
     gray = cv.cvtColor(img, code=cv.COLOR_BGR2GRAY)
     mser = cv.MSER_create(_min_area=250)
@@ -43,11 +42,12 @@ def mser_text_detect(img):
 
 def canny__(img):
     gray = cv.cvtColor(img, code=cv.COLOR_BGR2GRAY)
-    detected_edges = cv.GaussianBlur(gray, (3, 3), 0)
+    # detected_edges = cv.GaussianBlur(gray, (3, 3), 0)
+    detected_edges = gray
     detected_edges = cv.Canny(detected_edges, 120, 120 * 3, apertureSize=3)
     # just add some colours to edges from original image.
-    img = cv.bitwise_and(img, img, mask=detected_edges)
-    return img
+    # img = cv.bitwise_and(img, img, mask=detected_edges)
+    return detected_edges
 
 
 def laplace__(img):
@@ -58,15 +58,16 @@ def laplace__(img):
     dst = cv.Laplacian(gray, ddepth=cv.CV_32FC3, ksize=3)
     cv.convertScaleAbs(dst, gray)
 
+
 def do_ege_detect():
-    img = cv.imread('img/origin2/003.jpg', flags=cv.IMREAD_COLOR)
+    img = cv.imread(res_path + '003.jpg', flags=cv.IMREAD_COLOR)
     img = canny__(img)
     gray = cv.cvtColor(img, code=cv.COLOR_BGR2GRAY)
 
-    sub_image = gray[0:50, 230:gray.shape[1]-10]
+    sub_image = gray[0:50, 230:gray.shape[1] - 10]
     cv.imwrite(res_path + 'sub_image_1.jpg', sub_image)
 
-    sub_image= gray[50:gray.shape[0], 0:gray.shape[1]]
+    sub_image = gray[50:gray.shape[0], 0:gray.shape[1]]
     cv.imwrite(res_path + 'sub_image_2.jpg', sub_image)
 
     cv.imshow('image', gray)
@@ -76,7 +77,7 @@ def do_ege_detect():
 if __name__ == '__main__':
     # show_canny()
     do_ege_detect()
-    
+
 
 
 # def fun2(img):
