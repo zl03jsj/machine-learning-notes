@@ -1,55 +1,87 @@
 import numpy as np
+
 import cv2 as cv
 import matplotlib.pyplot as plt
 from PIL import Image
 
 
-def fun2(img):
-    mser = cv.MSER_create(_min_area=300)
+def ege_canny():
+    low_threshold = 120
+    max_low_threshold = 255
+    ratio = 3
+    kernel_size = 3
+
+    img = cv.imread('img/origin/004.bmp')
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-    regions, boxes = mser.detectRegions(gray)
-    for box in boxes:
-        if box[2] > 60 or box[3] > 60: continue
-        x, y, w, h = box
-        cv.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 2)
-    plt.imshow(img, 'brg')
-    plt.show()
+
+    def canny_threshold(cur_threshold):
+        detected_edges = cv.GaussianBlur(gray, (3, 3), 0)
+        detected_edges = cv.Canny(detected_edges, cur_threshold,
+                                  cur_threshold * ratio, apertureSize=kernel_size)
+        # just add some colours to edges from original image.
+        dst = cv.bitwise_and(img, img, mask=detected_edges)
+        cv.imshow('canny demo', dst)
+
+    cv.namedWindow('canny demo')
+    cv.createTrackbar('Min threshold', 'canny demo', low_threshold, max_low_threshold, canny_threshold)
+
+    canny_threshold(low_threshold)  # initialization
+
+    if cv.waitKey(0) == 27:
+        cv.destroyAllWindows()
 
 
-def fun1():
-    im = cv.imread('img/origin2/007.bmp', flags=cv.IMREAD_COLOR)
-    # cv.imshow('original image', im)
+if __name__ == '__main__':
+    ege_canny()
 
-    # im = cv.GaussianBlur(im, (3, 3), 3.0)
-    # cv.imshow("GaussianBlur", im)
-    # cv.waitKey()
 
-    gray = np.array(im)
-    cv.threshold(im, 7, 255, cv.THRESH_BINARY_INV, gray)
-    # cv.imshow("thresholds", gray)
-
-    gray = cv.cvtColor(gray, code=cv.COLOR_BGR2GRAY)
-    cv.imshow('original image convert to gray', gray)
-
-    dst = cv.Laplacian(gray, ddepth=cv.CV_32F, ksize=3)
-    cv.imshow('gray laplaced to dst', dst)
-
-    cv.convertScaleAbs(dst, gray)
-    cv.imshow('dst convert scale to gray', gray)
-    cv.waitKey()
-
-    # print(cv.__version__)
-    mser = cv.MSER_create(_min_area=50)
-    regions, boxes = mser.detectRegions(gray)
-
-    for box in boxes:
-        if (box[2] > 60 or box[2] < 20) or (box[3] > 60 or box[3] < 20): continue
-        x, y, w, h = box
-        cv.rectangle(im, (x, y), (x + w, y + h), (255, 0, 0), 2)
-    cv.imshow('detected regions', im)
-    cv.waitKey()
-
-fun1()
+# def fun2(img):
+#     mser = cv.MSER_create(_min_area=300)
+#     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+#     regions, boxes = mser.detectRegions(gray)
+#     for box in boxes:
+#         if box[2] > 60 or box[3] > 60: continue
+#         x, y, w, h = box
+#         cv.rectangle(img, (x, y), (x + w, y + h), (255, 0, 0), 2)
+#     plt.imshow(img, 'brg')
+#     plt.show()
+#
+#
+# def fun1():
+#     im = cv.imread('img/origin2/007.bmp', flags=cv.IMREAD_COLOR)
+#     # cv.imshow('original image', im)
+#
+#     # im = cv.GaussianBlur(im, (3, 3), 3.0)
+#     # cv.imshow("GaussianBlur", im)
+#     # cv.waitKey()
+#
+#     gray = np.array(im)
+#     cv.threshold(im, 7, 255, cv.THRESH_BINARY_INV, gray)
+#     # cv.imshow("thresholds", gray)
+#
+#     gray = cv.cvtColor(gray, code=cv.COLOR_BGR2GRAY)
+#     cv.imshow('original image convert to gray', gray)
+#
+#     dst = cv.Laplacian(gray, ddepth=cv.CV_32F, ksize=3)
+#     cv.imshow('gray laplaced to dst', dst)
+#
+#     cv.convertScaleAbs(dst, gray)
+#     cv.imshow('dst convert scale to gray', gray)
+#     cv.waitKey()
+#
+#     # print(cv.__version__)
+#     mser = cv.MSER_create(_min_area=50)
+#     regions, boxes = mser.detectRegions(gray)
+#
+#     for box in boxes:
+#         if (box[2] > 60 or box[2] < 20) or (box[3] > 60 or box[3] < 20): continue
+#         x, y, w, h = box
+#         cv.rectangle(im, (x, y), (x + w, y + h), (255, 0, 0), 2)
+#     cv.imshow('detected regions', im)
+#     cv.waitKey()
+#
+#
+# fun1()
 
 # import cv2.cv as cv
 # import cv2
