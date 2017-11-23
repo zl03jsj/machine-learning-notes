@@ -30,9 +30,6 @@ def make_points(img):
     return points
 
 
-# 51job 图片文字区域1(205, 20), (325, 45)
-# 51Job 图片文字区域2(0,   60), (340, 175)
-
 def image_is_51_verifycode(image):
     shape = image.shape
     return False if (shape[0] != 236 or shape[1] != 350) else True
@@ -51,7 +48,7 @@ def image51_pre_solve(image):
 
 
 def filter_image(image_gray):
-    threshold = 100
+    threshold = 120
     rows, cols = image_gray.shape
     for row in range(rows):
         for col in range(cols):
@@ -70,7 +67,7 @@ def filter_cluster(labels, points):
     n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
 
     cluster_boxs = []
-    used_labels = []
+    used_clusters = []
     for k in unique_labels:
         if -1 == k: continue
         class_member_mask = (labels == k)
@@ -83,14 +80,14 @@ def filter_cluster(labels, points):
         r = xs.max()
         t = ys.min()
         b = ys.max()
-        if r - l < 10 or b - t < 10: continue
+        if r - l < 10 or b - t < 10 or r - l > 40 or b - t > 40: continue
 
         box = [(l, t), (r, b)]
 
         cluster_boxs.append(box)
-        used_labels.append( labels[k] )
+        used_clusters.append(k)
 
-    return (used_labels, cluster_boxs)
+    return used_clusters, cluster_boxs
 
     #     cv.rectangle(image, box[0], box[1], thickness=1,
     #                  color=np.random.randint(0, high=256, size=(3,)).tolist())
@@ -98,25 +95,25 @@ def filter_cluster(labels, points):
     # cv.imshow('image', image)
     # cv.waitKey()
 
+
 def main():
-    image = cv.imread('img/origin/010.bmp')
+    image = cv.imread('img/origin/008.bmp')
 
     # thresholds = np.array(image)
     # cv.threshold(thresholds, 100, 180, cv.THRESH_BINARY_INV, thresholds)
 
     gray = cv.cvtColor(image, code=cv.COLOR_BGR2GRAY)
     filter_image(gray)
-    cv.imshow('gray', gray)
+    # cv.imshow('gray', gray)
 
-    # gray = canny__(thresholds)
-    # image_part1, image_part2 = image51_split(gray)
-    # cv.imshow('image, part1', image_part1)
-    # cv.imshow('image, part2', image_part2)
+    image_part_1, image_part_2 = image51_split(gray)
+    cv.imshow('image_part_1', image_part_1)
+    cv.imshow('image_part_2', image_part_2)
 
     points = make_points(gray)
     samples = StandardScaler().fit_transform(points)
 
-    db = DBSCAN(eps=0.1, min_samples=8).fit(samples)
+    db = DBSCAN(eps=0.08, min_samples=16).fit(samples)
 
     core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
     core_samples_mask[db.core_sample_indices_] = True
@@ -130,16 +127,16 @@ def main():
     used_labels, cluster_boxs = filter_cluster(labels, points)
     for box in cluster_boxs:
         cv.rectangle(image, box[0], box[1], thickness=1,
-                     color=np.random.randint(0, high=256, size=(3,)).tolist())
+            color=np.random.randint(0, high=256, size=(3,)).tolist())
     cv.imshow('image', image)
-    cv.waitKey()
-
+    cv.waitKey(6 * 1000)
 
     # 这里是把聚类绘制出来...
     # colors = [random_color() for _ in np.arange(n_clusters_)]
 
     colors = plt.cm.Spectral(np.linspace(0, 1, len(unique_labels)))
-    for k, c in zip(used_labels, colors):
+    for k, c in zip(unique_labels, colors):
+        if k not in used_labels: continue
         class_member_mask = (labels == k)
         xy = points[class_member_mask]
         plt.plot(xy[:, 1], -xy[:, 0], '.', color=c)
@@ -153,4 +150,3 @@ if __name__ == '__main__':
     main()
     end = time.clock()
     print('finish all in %s' % str(end - start))
-
