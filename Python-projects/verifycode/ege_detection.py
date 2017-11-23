@@ -42,8 +42,9 @@ def mser_text_detect(img):
 
 def canny__(img):
     gray = cv.cvtColor(img, code=cv.COLOR_BGR2GRAY)
-    # detected_edges = cv.GaussianBlur(gray, (3, 3), 0)
-    detected_edges = gray
+    cv.imshow('gray', gray)
+    detected_edges = cv.GaussianBlur(gray, (3, 3), 0)
+    # detected_edges = gray
     detected_edges = cv.Canny(detected_edges, 120, 120 * 3, apertureSize=3)
     # just add some colours to edges from original image.
     # img = cv.bitwise_and(img, img, mask=detected_edges)

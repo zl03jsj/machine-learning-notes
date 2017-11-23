@@ -56,7 +56,7 @@ def make_points(image_gray):
 def main():
     # dataSet = loadDataSet('./data/788points.txt', splitChar=',')
     # dataSet = loadImage('./images/51_capt_20171110_104630(120,98;43,128;309,108;187,108).bmp')
-    dataSet = loadImage('./images/51_capt_20171110_104630(120,98;43,128;309,108;187,108).bmp')
+    dataSet = loadImage('img/origin/010.bmp')
     Image.fromarray(dataSet).show()
     X = make_points(dataSet)
     X1 = StandardScaler().fit_transform(X)

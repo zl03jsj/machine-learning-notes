@@ -30,50 +30,122 @@ def make_points(img):
     return points
 
 
+# 51job 图片文字区域1(205, 20), (325, 45)
+# 51Job 图片文字区域2(0,   60), (340, 175)
+
+def image_is_51_verifycode(image):
+    shape = image.shape
+    return False if (shape[0] != 236 or shape[1] != 350) else True
+
+
+def image51_split(image):
+    if not image_is_51_verifycode(image): return None
+    return image[14:54, 186:330], image[60:175, 10:340]
+
+
+def image51_pre_solve(image):
+    if not image_is_51_verifycode(image):
+        return
+    shape = image.shape
+    image[0:45, 0:180] = 0
+
+
+def filter_image(image_gray):
+    threshold = 100
+    rows, cols = image_gray.shape
+    for row in range(rows):
+        for col in range(cols):
+            if row in range(0, 45) and col in range(0, 180):
+                image_gray[row, col] = 0
+            elif image_gray[row, col] >= threshold:
+                image_gray[row, col] = 0
+            else:
+                image_gray[row, col] = 255
+    return image_gray
+
+
+def filter_cluster(labels, points):
+    unique_labels = set(labels)
+
+    n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
+
+    cluster_boxs = []
+    used_labels = []
+    for k in unique_labels:
+        if -1 == k: continue
+        class_member_mask = (labels == k)
+        cluster_points = points[class_member_mask]
+
+        xs = cluster_points[:, 1]
+        ys = cluster_points[:, 0]
+
+        l = xs.min()
+        r = xs.max()
+        t = ys.min()
+        b = ys.max()
+        if r - l < 10 or b - t < 10: continue
+
+        box = [(l, t), (r, b)]
+
+        cluster_boxs.append(box)
+        used_labels.append( labels[k] )
+
+    return (used_labels, cluster_boxs)
+
+    #     cv.rectangle(image, box[0], box[1], thickness=1,
+    #                  color=np.random.randint(0, high=256, size=(3,)).tolist())
+    #
+    # cv.imshow('image', image)
+    # cv.waitKey()
+
 def main():
-    image = cv.imread('img/origin/011.bmp')
-    image = canny__(image)
+    image = cv.imread('img/origin/010.bmp')
 
-    cv.imshow('ege_detected image', image)
+    # thresholds = np.array(image)
+    # cv.threshold(thresholds, 100, 180, cv.THRESH_BINARY_INV, thresholds)
 
-    points = make_points(image)
+    gray = cv.cvtColor(image, code=cv.COLOR_BGR2GRAY)
+    filter_image(gray)
+    cv.imshow('gray', gray)
+
+    # gray = canny__(thresholds)
+    # image_part1, image_part2 = image51_split(gray)
+    # cv.imshow('image, part1', image_part1)
+    # cv.imshow('image, part2', image_part2)
+
+    points = make_points(gray)
     samples = StandardScaler().fit_transform(points)
 
-    db = DBSCAN(eps=0.05, min_samples=8).fit(samples)
+    db = DBSCAN(eps=0.1, min_samples=8).fit(samples)
 
     core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
     core_samples_mask[db.core_sample_indices_] = True
+
     labels = db.labels_
-
-    # Number of clusters in labels, ignoring noise if present.
-    n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
-
-    points = np.array(points)
-
-    # Black removed and is used for noise instead.
     unique_labels = set(labels)
 
-    colors = [plt.cm.Spectral(each)
-             for each in np.linspace(0, 1, len(unique_labels))]
-    #
-    # colors = []
-    # for _ in np.arange(15): colors.append(random_color())
+    n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
+    points = np.array(points)
+
+    used_labels, cluster_boxs = filter_cluster(labels, points)
+    for box in cluster_boxs:
+        cv.rectangle(image, box[0], box[1], thickness=1,
+                     color=np.random.randint(0, high=256, size=(3,)).tolist())
+    cv.imshow('image', image)
+    cv.waitKey()
 
 
-    for k, c in zip(unique_labels, colors):
-        if k == -1: c = [0, 0, 0, 1]
+    # 这里是把聚类绘制出来...
+    # colors = [random_color() for _ in np.arange(n_clusters_)]
 
+    colors = plt.cm.Spectral(np.linspace(0, 1, len(unique_labels)))
+    for k, c in zip(used_labels, colors):
         class_member_mask = (labels == k)
-
-        xy = points[class_member_mask & core_samples_mask]
-        plt.plot(xy[:, 1], -xy[:, 0], '.', color=c)  # , markerfacecolor=tuple(col),markeredgecolor='k', markersize=14)
-
-        xy = points[class_member_mask & ~core_samples_mask]
-        plt.plot(xy[:, 1], -xy[:, 0], '.', color=c)  # , markerfacecolor=tuple(col),markeredgecolor='k', markersize=6)
+        xy = points[class_member_mask]
+        plt.plot(xy[:, 1], -xy[:, 0], '.', color=c)
 
     plt.title('Estimated number of clusters: %d' % n_clusters_)
     plt.show()
-    # plt.waitforbuttonpress()
 
 
 if __name__ == '__main__':
@@ -82,22 +154,3 @@ if __name__ == '__main__':
     end = time.clock()
     print('finish all in %s' % str(end - start))
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#
