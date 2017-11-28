@@ -1,12 +1,13 @@
 from sklearn.cluster import DBSCAN
 from sklearn.preprocessing import StandardScaler
-import cv2 as cv
+import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 import time
 import tensorflow as tf
 from verifycode.ege_detection import canny__
 
+__commands__ = {1:'template match', 2:'feature match', 3:'maching learning'}
 
 # %matplotlib inline
 
@@ -18,10 +19,7 @@ def random_color():
 
 
 def make_points(img):
-    if len(img.shape) != 2:
-        gray = cv.cvtColor(img, code=cv.COLOR_BGR2GRAY)
-    else:
-        gray = img
+    gray = get_gray(img)
     rows, cols = gray.shape
     points = []
     for i in np.arange(0, rows):
@@ -38,7 +36,8 @@ def image_is_51_verifycode(image):
 
 def image51_split(image):
     if not image_is_51_verifycode(image): return None
-    template_images = [image[14:54, 186:222], image[14:54, 222:258], image[14:54, 258:294], image[14:54, 186:330]]
+    template_images = [image[19:43, 206:235], image[19:43, 235:265], image[19:43, 265:294], image[19:43, 294:323]]
+    # cv2.imwrite('./template_image.jpg', image[19:43, 206:323])
     return template_images, image[60:175, 10:340]
 
 
@@ -63,7 +62,7 @@ def filter_image(image_gray):
     return image_gray
 
 
-def filter_cluster(labels, points):
+def filter_cluster(labels, points, max_shape, expend_=0):
     unique_labels = set(labels)
 
     n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
@@ -84,21 +83,17 @@ def filter_cluster(labels, points):
         b = ys.max()
         if r - l < 10 or b - t < 10 or r - l > 40 or b - t > 40: continue
 
+        l = max(0, l-expend_)
+        r = min(max_shape[1], r+expend_)
+        t = max(0, t-expend_)
+        b = min(max_shape[0], b+expend_)
+
         box = [(l, t), (r, b)]
 
         cluster_boxs.append(box)
         used_clusters.append(k)
 
     return used_clusters, cluster_boxs
-
-
-
-
-    #     cv.rectangle(image, box[0], box[1], thickness=1,
-    #                  color=np.random.randint(0, high=256, size=(3,)).tolist())
-    #
-    # cv.imshow('image', image)
-    # cv.waitKey()
 
 
 # def crack_captcha_cnn(w_alpha=0.01, b_alpha=0.1):
@@ -136,24 +131,93 @@ def filter_cluster(labels, points):
 #     # out = tf.nn.softmax(out)
 #     return out
 
+def do_feather_match(imgs, tmplates) :
+    return
+
+
+def get_gray(image):
+    if len(image.shape) != 2: return cv2.cv2.Color(image, code=cv2.COLOR_BGR2GRAY)
+    else: return image.copy()
+
+
+def get_sift(img):
+    gray = get_gray(img)
+    sift = cv2.SIFT()
+    kp, des = sift.detectAndCompute(gray, None)
+    # fea_det = cv2.Feature2D_create('SIFT')
+    # des_ext = cv2.DescriptorExtrator_create('SIFT')
+    # keypoints = fea_det.detect(gray)
+    # kp, des = des_ext.compute(gray, keypoints)
+    img = cv2.drawKeypoints(gray, kp)
+    plt.imshow(img),plt.show()
+    return kp, des
+
+
+def opencv_sift_match(img1, img2):
+    kp1, des1 = get_sift(img1)
+    kp2, des2 = get_sift(img2)
+
+
+
+
+def do_templagte_match(img, template):
+    # img2 = img.copy()
+    w, h = template.shape[::-1]
+    # All the 6 methods for comparison in a list
+    methods = ['cv2.TM_CCOEFF', 'cv2.TM_CCOEFF_NORMED', 'cv2.TM_CCORR',
+               'cv2.TM_CCORR_NORMED', 'cv2.TM_SQDIFF', 'cv2.TM_SQDIFF_NORMED']
+
+    for meth in methods:
+        img2 = img.copy()
+        method = eval(meth)
+
+        # Apply template Matching
+        res = cv2.matchTemplate(img2, template, method)
+        min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
+
+        # If the method is TM_SQDIFF or TM_SQDIFF_NORMED, take minimum
+        if method in [cv2.TM_SQDIFF, cv2.TM_SQDIFF_NORMED]:
+            top_left = min_loc
+        else:
+            top_left = max_loc
+        bottom_right = (top_left[0] + w, top_left[1] + h)
+
+        cv2.rectangle(img2, top_left, bottom_right, 255, 2)
+
+        plt.subplot(211), plt.imshow(template, cmap='gray')
+
+        plt.subplot(223), plt.imshow(res, cmap='gray')
+        plt.title('Matching Result'), plt.xticks([]), plt.yticks([])
+
+        plt.subplot(224), plt.imshow(img2, cmap='gray')
+        plt.title('Detected Point'), plt.xticks([]), plt.yticks([])
+        plt.suptitle(meth)
+
+        plt.show()
+
+
+
 def main():
-    image = cv.imread('img/origin/008.bmp')
+    image = cv2.imread('img/origin/009.bmp')
 
-    # thresholds = np.array(image)
-    # cv.threshold(thresholds, 100, 180, cv.THRESH_BINARY_INV, thresholds)
-
-    gray = cv.cvtColor(image, code=cv.COLOR_BGR2GRAY)
+    gray = cv2.cvtColor(image, code=cv2.COLOR_BGR2GRAY)
     filter_image(gray)
-    # cv.imshow('gray', gray)
 
-    image_part_1, image_part_2 = image51_split(gray)
-    cv.imshow('image_part_1', image_part_1[0])
-    cv.imshow('image_part_2', image_part_2)
+    templates, target_image = image51_split(gray)
+    # cv2.imshow('gray', gray)
+    # cv2.imshow('templates', templates[0])
+    cv2.imshow('target_image', target_image)
 
-    points = make_points(gray)
+    # if __commands__=='do template match':
+    #     for tmplate in templates:
+    #         do_templagte_match(traget_image, tmplate)
+    # elif __commands__=='do featcher match':
+    #     do_feather_match()
+
+    points = make_points(target_image)
     samples = StandardScaler().fit_transform(points)
 
-    db = DBSCAN(eps=0.08, min_samples=16).fit(samples)
+    db = DBSCAN(eps=0.15, min_samples=7).fit(samples)
 
     core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
     core_samples_mask[db.core_sample_indices_] = True
@@ -164,26 +228,27 @@ def main():
     n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
     points = np.array(points)
 
-    used_labels, cluster_boxs = filter_cluster(labels, points)
+    used_labels, cluster_boxs = filter_cluster(labels, points, target_image.shape, 3)
+    source_images = []
+
     for box in cluster_boxs:
-        cv.rectangle(image, box[0], box[1], thickness=1,
-            color=np.random.randint(0, high=256, size=(3,)).tolist())
-    cv.imshow('image', image)
-    cv.waitKey(6 * 1000)
+        tmp_image = gray[box[0][1]:box[1][1], box[0][0]:box[1][0]]
+        source_images.append(tmp_image)
+        # cv2.rectangle(target_image, box[0], box[1], thickness=1, color=np.random.randint(0, high=256, size=(3,)).tolist())
 
     # 这里是把聚类绘制出来...
     # colors = [random_color() for _ in np.arange(n_clusters_)]
+    # colors = plt.cm.Spectral(np.linspace(0, 1, len(unique_labels)))
+    # for k, c in zip(unique_labels, colors):
+    #     if k not in used_labels: continue
+    #     class_member_mask = (labels == k)
+    #     xy = points[class_member_mask]
+    #     plt.plot(xy[:, 1], -xy[:, 0], '*', color=c)
+    #
+    # plt.title('Estimated number of clusters: %d' % n_clusters_)
+    # plt.show()
 
-    colors = plt.cm.Spectral(np.linspace(0, 1, len(unique_labels)))
-    for k, c in zip(unique_labels, colors):
-        if k not in used_labels: continue
-        class_member_mask = (labels == k)
-        xy = points[class_member_mask]
-        plt.plot(xy[:, 1], -xy[:, 0], '.', color=c)
-
-    plt.title('Estimated number of clusters: %d' % n_clusters_)
-    plt.show()
-
+    get_sift(source_images[0])
 
 if __name__ == '__main__':
     start = time.clock()
