@@ -1,13 +1,14 @@
+import time
+
+import cv2
+import matplotlib.pyplot as plt
+import numpy as np
+import verifycode.ege_detection
 from sklearn.cluster import DBSCAN
 from sklearn.preprocessing import StandardScaler
-import cv2
-import numpy as np
-import matplotlib.pyplot as plt
-import time
-import tensorflow as tf
-from verifycode.ege_detection import canny__
 
-__commands__ = {1:'template match', 2:'feature match', 3:'maching learning'}
+__commands__ = {1: 'template match', 2: 'feature match', 3: 'maching learning'}
+
 
 # %matplotlib inline
 
@@ -83,12 +84,12 @@ def filter_cluster(labels, points, max_shape, expend_=0):
         b = ys.max()
         if r - l < 10 or b - t < 10 or r - l > 40 or b - t > 40: continue
 
-        l = max(0, l-expend_)
-        r = min(max_shape[1], r+expend_)
-        t = max(0, t-expend_)
-        b = min(max_shape[0], b+expend_)
+        l = max(0, l - expend_)
+        r = min(max_shape[1], r + expend_)
+        t = max(0, t - expend_)
+        b = min(max_shape[0], b + expend_)
 
-        box = [(l, t), (r, b)]
+        box = [[l, t], [r, b]]
 
         cluster_boxs.append(box)
         used_clusters.append(k)
@@ -131,33 +132,38 @@ def filter_cluster(labels, points, max_shape, expend_=0):
 #     # out = tf.nn.softmax(out)
 #     return out
 
-def do_feather_match(imgs, tmplates) :
+def do_feather_match(imgs, tmplates):
     return
 
 
 def get_gray(image):
-    if len(image.shape) != 2: return cv2.cv2.Color(image, code=cv2.COLOR_BGR2GRAY)
-    else: return image.copy()
+    if len(image.shape) != 2:
+        return cv2.cvtColor(image, code=cv2.COLOR_BGR2GRAY)
+    else:
+        return image.copy()
 
 
 def get_sift(img):
     gray = get_gray(img)
-    sift = cv2.SIFT()
-    kp, des = sift.detectAndCompute(gray, None)
+    surf = cv2.xfeatures2d.SURF_create()
+    kp, des =surf.detectAndCompute(gray, None)
     # fea_det = cv2.Feature2D_create('SIFT')
     # des_ext = cv2.DescriptorExtrator_create('SIFT')
     # keypoints = fea_det.detect(gray)
     # kp, des = des_ext.compute(gray, keypoints)
-    img = cv2.drawKeypoints(gray, kp)
-    plt.imshow(img),plt.show()
+    # out_image = img.copy()
+    # cv2.drawKeypoints(img, kp, out_image, color=255, flags=cv2.DRAW_MATCHES_FLAGS_DEFAULT)
+    # plt.subplot(121), plt.imshow(img)
+    # plt.title('original image'), plt.xticks([]), plt.yticks([])
+    # plt.subplot(122), plt.imshow(out_image)
+    # plt.title('image with feature points'), plt.xticks([]), plt.yticks([])
+    # plt.show()
     return kp, des
 
 
 def opencv_sift_match(img1, img2):
     kp1, des1 = get_sift(img1)
     kp2, des2 = get_sift(img2)
-
-
 
 
 def do_templagte_match(img, template):
@@ -196,25 +202,119 @@ def do_templagte_match(img, template):
         plt.show()
 
 
+def filter_matches(kp1, kp2, matches, ratio=0.75):
+    mkp1, mkp2 = [], []
+    for m in matches:
+        if len(m) == 2 and m[0].distance < m[1].distance * ratio:
+            m = m[0]
+            mkp1.append(kp1[m.queryIdx])
+            mkp2.append(kp2[m.trainIdx])
+    p1 = np.float32([kp.pt for kp in mkp1])
+    p2 = np.float32([kp.pt for kp in mkp2])
+    kp_pairs = zip(mkp1, mkp2)
+    return p1, p2, kp_pairs, len(mkp1)
+
+
+def explore_match(win, img1, img2, kp_pairs, status=None, H=None):
+    h1, w1 = img1.shape[:2]
+    h2, w2 = img2.shape[:2]
+    vis = np.zeros((max(h1, h2), w1 + w2), np.uint8)
+    vis[:h1, :w1] = img1
+    vis[:h2, w1:w1 + w2] = img2
+    vis = cv2.cvtColor(vis, cv2.COLOR_GRAY2BGR)
+
+    if H is not None:
+        corners = np.float32([[0, 0], [w1, 0], [w1, h1], [0, h1]])
+        corners = np.int32(cv2.perspectiveTransform(corners.reshape(1, -1, 2), H).reshape(-1, 2) + (w1, 0))
+        cv2.polylines(vis, [corners], True, (255, 255, 255))
+
+    if status is None:
+        status = np.ones(len(kp_pairs), np.bool)
+    p1 = np.int32([kpp[0].pt for kpp in kp_pairs])
+    p2 = np.int32([kpp[1].pt for kpp in kp_pairs]) + (w1, 0)
+
+    green = (0, 255, 0)
+    red = (0, 0, 255)
+    white = (255, 255, 255)
+    kp_color = (51, 103, 236)
+    for (x1, y1), (x2, y2), inlier in zip(p1, p2, status):
+        if inlier:
+            col = green
+            cv2.circle(vis, (x1, y1), 2, col, -1)
+            cv2.circle(vis, (x2, y2), 2, col, -1)
+        else:
+            col = red
+            r = 2
+            thickness = 3
+            cv2.line(vis, (x1 - r, y1 - r), (x1 + r, y1 + r), col, thickness)
+            cv2.line(vis, (x1 - r, y1 + r), (x1 + r, y1 - r), col, thickness)
+            cv2.line(vis, (x2 - r, y2 - r), (x2 + r, y2 + r), col, thickness)
+            cv2.line(vis, (x2 - r, y2 + r), (x2 + r, y2 - r), col, thickness)
+    vis0 = vis.copy()
+    for (x1, y1), (x2, y2), inlier in zip(p1, p2, status):
+        if inlier:
+            cv2.line(vis, (x1, y1), (x2, y2), green)
+
+    cv2.imshow(win, vis)
+
+
+def get_most_match_image(tmplate, targets_arr):
+    if 0 == len(targets_arr): return None
+    tmp_kp, tmp_des = get_sift(tmplate)
+    most_match_index = 0
+    most_match_count = 0
+    for index, target in zip(np.arange(0, len(targets_arr)), targets_arr):
+        cv2.imshow('image', target['image'])
+        cv2.waitKey()
+        cv2.destroyAllWindows()
+
+        tar_kp, tar_des = get_sift(target['image'])
+        bf = cv2.BFMatcher(cv2.NORM_L1)
+        matches = bf.match(tmp_des, tar_des)
+        _, _, _, count = filter_matches(tmp_kp, tar_kp, matches, ratio=0.5)
+        if count > most_match_count:
+            most_match_index = index
+            most_match_count = count
+    return most_match_index
+
+def get_shape_match_rate(img1, img2):
+    originalGray = get_gray(img1)
+    drawnGray = get_gray(img2)
+
+    #apply erosion
+    kernel = np.ones((2, 2),np.uint8)
+    originalErosion = cv2.erode(originalGray, kernel, iterations = 1)
+    drawnErosion = cv2.erode(drawnGray, kernel, iterations = 1)
+
+    #retrieve edges with Canny
+    thresh = 175
+    originalEdges = cv2.Canny(originalErosion, thresh, thresh*2)
+    drawnEdges = cv2.Canny(drawnErosion, thresh, thresh*2)
+
+    #extract contours
+    originalContours, Orighierarchy = cv2.findContours(originalEdges, cv2.cv.CV_RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
+    drawnContours, Drawnhierarchy = cv2.findContours(drawnEdges, cv2.cv.CV_RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
+
+    return cv2.matchShapes(drawnContours,originalContours,cv2.cv.CV_CONTOURS_MATCH_I1, 0.0)
+
 
 def main():
     image = cv2.imread('img/origin/009.bmp')
+    origin_templates, origin_target = image51_split(image)
 
     gray = cv2.cvtColor(image, code=cv2.COLOR_BGR2GRAY)
     filter_image(gray)
 
-    templates, target_image = image51_split(gray)
+    gray_templates, gray_target = image51_split(gray)
     # cv2.imshow('gray', gray)
     # cv2.imshow('templates', templates[0])
-    cv2.imshow('target_image', target_image)
-
     # if __commands__=='do template match':
     #     for tmplate in templates:
     #         do_templagte_match(traget_image, tmplate)
     # elif __commands__=='do featcher match':
     #     do_feather_match()
 
-    points = make_points(target_image)
+    points = make_points(gray_target)
     samples = StandardScaler().fit_transform(points)
 
     db = DBSCAN(eps=0.15, min_samples=7).fit(samples)
@@ -224,18 +324,12 @@ def main():
 
     labels = db.labels_
     unique_labels = set(labels)
-
     n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
     points = np.array(points)
 
-    used_labels, cluster_boxs = filter_cluster(labels, points, target_image.shape, 3)
-    source_images = []
-
-    for box in cluster_boxs:
-        tmp_image = gray[box[0][1]:box[1][1], box[0][0]:box[1][0]]
-        source_images.append(tmp_image)
-        # cv2.rectangle(target_image, box[0], box[1], thickness=1, color=np.random.randint(0, high=256, size=(3,)).tolist())
-
+    used_labels, cluster_boxs = filter_cluster(labels, points, gray_target.shape, 3)
+    # cv2.imshow('gray_target', gray_target)
+    # cv2.waitKey()
     # 这里是把聚类绘制出来...
     # colors = [random_color() for _ in np.arange(n_clusters_)]
     # colors = plt.cm.Spectral(np.linspace(0, 1, len(unique_labels)))
@@ -248,10 +342,26 @@ def main():
     # plt.title('Estimated number of clusters: %d' % n_clusters_)
     # plt.show()
 
-    get_sift(source_images[0])
+    subimage_info_arr = []
+    for box in cluster_boxs:
+        tmp_image = gray_target[box[0][1]:box[1][1], box[0][0]:box[1][0]]
+        point = ((box[0][0] + box[1][0]) // 2, (box[0][1] + box[1][1]) // 2)
+        subimage_info_arr.append({'image': tmp_image, 'box': box, 'point': point})
+
+    matched_points = []
+    for template in gray_templates:
+        index = get_most_match_image(template, subimage_info_arr)
+        matched_points.append(subimage_info_arr[index]['point'])
+        origin_target = cv2.circle(origin_target, subimage_info_arr[index]['point'], radius=10, color=(0,0,255), thickness=4)
+        cv2.imshow('image', origin_target)
+        cv2.waitKey()
+
+
+def main_2():
+    return
 
 if __name__ == '__main__':
     start = time.clock()
-    main()
+    main_2()
     end = time.clock()
     print('finish all in %s' % str(end - start))
