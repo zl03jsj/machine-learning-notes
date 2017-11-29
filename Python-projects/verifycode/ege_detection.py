@@ -41,7 +41,8 @@ def mser_text_detect(img):
 
 
 def canny__(img):
-    gray = cv.cvtColor(img, code=cv.COLOR_BGR2GRAY)
+    import verifycode.image_dbscan
+    gray = verifycode.image_dbscan.get_gray(img)
     cv.imshow('gray', gray)
     detected_edges = cv.GaussianBlur(gray, (3, 3), 0)
     # detected_edges = gray
@@ -62,6 +63,7 @@ def laplace__(img):
 
 def do_ege_detect():
     img = cv.imread(res_path + '003.jpg', flags=cv.IMREAD_COLOR)
+
     img = canny__(img)
     gray = cv.cvtColor(img, code=cv.COLOR_BGR2GRAY)
 
@@ -69,6 +71,7 @@ def do_ege_detect():
     cv.imwrite(res_path + 'sub_image_1.jpg', sub_image)
 
     sub_image = gray[50:gray.shape[0], 0:gray.shape[1]]
+
     cv.imwrite(res_path + 'sub_image_2.jpg', sub_image)
 
     cv.imshow('image', gray)

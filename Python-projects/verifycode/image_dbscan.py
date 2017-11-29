@@ -9,7 +9,6 @@ from sklearn.preprocessing import StandardScaler
 
 __commands__ = {1: 'template match', 2: 'feature match', 3: 'maching learning'}
 
-
 # %matplotlib inline
 
 def random_color():
@@ -146,7 +145,7 @@ def get_gray(image):
 def get_sift(img):
     gray = get_gray(img)
     surf = cv2.xfeatures2d.SURF_create()
-    kp, des =surf.detectAndCompute(gray, None)
+    kp, des = surf.detectAndCompute(gray, None)
     # fea_det = cv2.Feature2D_create('SIFT')
     # des_ext = cv2.DescriptorExtrator_create('SIFT')
     # keypoints = fea_det.detect(gray)
@@ -277,25 +276,39 @@ def get_most_match_image(tmplate, targets_arr):
             most_match_count = count
     return most_match_index
 
+
 def get_shape_match_rate(img1, img2):
-    originalGray = get_gray(img1)
-    drawnGray = get_gray(img2)
+    cv2.imshow('image1', img1)
+    cv2.imshow('image2', img2)
+    cv2.waitKey()
 
-    #apply erosion
-    kernel = np.ones((2, 2),np.uint8)
-    originalErosion = cv2.erode(originalGray, kernel, iterations = 1)
-    drawnErosion = cv2.erode(drawnGray, kernel, iterations = 1)
+    gray1 = get_gray(img1)
+    gray2 = get_gray(img2)
 
-    #retrieve edges with Canny
-    thresh = 175
-    originalEdges = cv2.Canny(originalErosion, thresh, thresh*2)
-    drawnEdges = cv2.Canny(drawnErosion, thresh, thresh*2)
+    ret, thresh = cv2.threshold(gray1, 127, 255, 0)
+    ret, thresh2 = cv2.threshold(gray2, 127, 255, 0)
 
-    #extract contours
-    originalContours, Orighierarchy = cv2.findContours(originalEdges, cv2.cv.CV_RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
-    drawnContours, Drawnhierarchy = cv2.findContours(drawnEdges, cv2.cv.CV_RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
+    _, contours, hierarchy = cv2.findContours(thresh, 2, 1)
+    cnt1 = contours[0]
+    _, contours, hierarchy = cv2.findContours(thresh2, 2, 1)
+    cnt2 = contours[0]
 
-    return cv2.matchShapes(drawnContours,originalContours,cv2.cv.CV_CONTOURS_MATCH_I1, 0.0)
+    ret = cv2.matchShapes(cnt1, cnt2, 1, 0.0)
+    # _, contours1, hierarchy1 = cv2.findContours(gray1, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
+    # _, contours2, hierarchy2 = cv2.findContours(gray2, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
+    # ret = cv2.matchShapes(contours1[0], contours2[0], cv2.CONTOURS_MATCH_I1, 0.0)
+    return ret
+
+def get_most_matched_shape(template, targets):
+    match_rate = 1000
+    matched_index = 0
+    for index, tgt in zip(np.arange(0, len(targets)), targets):
+        rate = get_shape_match_rate(template, tgt['image'])
+        print('match rage', rate)
+        if rate < match_rate:
+            match_rate = rate
+            matched_index = index
+    return matched_index
 
 
 def main():
@@ -304,6 +317,8 @@ def main():
 
     gray = cv2.cvtColor(image, code=cv2.COLOR_BGR2GRAY)
     filter_image(gray)
+    cv2.imshow('image', gray)
+    cv2.waitKey()
 
     gray_templates, gray_target = image51_split(gray)
     # cv2.imshow('gray', gray)
@@ -352,13 +367,56 @@ def main():
     for template in gray_templates:
         index = get_most_match_image(template, subimage_info_arr)
         matched_points.append(subimage_info_arr[index]['point'])
-        origin_target = cv2.circle(origin_target, subimage_info_arr[index]['point'], radius=10, color=(0,0,255), thickness=4)
+        origin_target = cv2.circle(origin_target, subimage_info_arr[index]['point'], radius=10, color=(0, 0, 255),
+                                   thickness=4)
         cv2.imshow('image', origin_target)
         cv2.waitKey()
 
 
 def main_2():
-    return
+    image = cv2.imread('img/origin/009.bmp')
+    cv2.imshow('original image', image)
+
+    gray = cv2.cvtColor(image, code=cv2.COLOR_BGR2GRAY)
+    filter_image(gray)
+
+    _, image = image51_split(image)
+
+    gray_templates, gray_targets = image51_split(gray)
+    points = make_points(gray_targets)
+
+    samples = StandardScaler().fit_transform(points)
+    db = DBSCAN(eps=0.15, min_samples=7).fit(samples)
+    core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
+    core_samples_mask[db.core_sample_indices_] = True
+    labels = db.labels_
+    unique_labels = set(labels)
+    n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
+    points = np.array(points)
+
+    used_labels, cluster_boxs = filter_cluster(labels, points, gray_targets.shape, 3)
+
+    # eged_gray = verifycode.ege_detection.canny__(gray_targets)
+
+    subimage_info_arr = []
+    for box in cluster_boxs:
+        tmp_image = gray_targets[box[0][1]:box[1][1], box[0][0]:box[1][0]]
+        point = ((box[0][0] + box[1][0]) // 2, (box[0][1] + box[1][1]) // 2)
+        subimage_info_arr.append({'image': tmp_image, 'box': box, 'point': point})
+
+    matched_points = []
+
+    for template in gray_templates:
+        index = get_most_matched_shape(template, subimage_info_arr)
+        matched_points.append(subimage_info_arr[index]['point'])
+        image = cv2.circle(image, subimage_info_arr[index]['point'], radius=10, color=(0, 0, 255),
+                               thickness=4)
+        # cv2.imshow('tmeplate', template)
+        # cv2.imshow('matched image', subimage_info_arr[index]['image'])
+        # cv2.waitKey()
+
+    cv2.imshow('image', image)
+    cv2.waitKey()
 
 if __name__ == '__main__':
     start = time.clock()
