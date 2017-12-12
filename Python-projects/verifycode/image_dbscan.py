@@ -343,19 +343,19 @@ def main():
     points = np.array(points)
 
     used_labels, cluster_boxs = filter_cluster(labels, points, gray_target.shape, 3)
-    # cv2.imshow('gray_target', gray_target)
-    # cv2.waitKey()
+    cv2.imshow('gray_target', gray_target)
+    cv2.waitKey()
     # 这里是把聚类绘制出来...
-    # colors = [random_color() for _ in np.arange(n_clusters_)]
-    # colors = plt.cm.Spectral(np.linspace(0, 1, len(unique_labels)))
-    # for k, c in zip(unique_labels, colors):
-    #     if k not in used_labels: continue
-    #     class_member_mask = (labels == k)
-    #     xy = points[class_member_mask]
-    #     plt.plot(xy[:, 1], -xy[:, 0], '*', color=c)
-    #
-    # plt.title('Estimated number of clusters: %d' % n_clusters_)
-    # plt.show()
+    colors = [random_color() for _ in np.arange(n_clusters_)]
+    colors = plt.cm.Spectral(np.linspace(0, 1, len(unique_labels)))
+    for k, c in zip(unique_labels, colors):
+        if k not in used_labels: continue
+        class_member_mask = (labels == k)
+        xy = points[class_member_mask]
+        plt.plot(xy[:, 1], -xy[:, 0], '*', color=c)
+
+    plt.title('Estimated number of clusters: %d' % n_clusters_)
+    plt.show()
 
     subimage_info_arr = []
     for box in cluster_boxs:
@@ -409,8 +409,8 @@ def main_2():
     for template in gray_templates:
         index = get_most_matched_shape(template, subimage_info_arr)
         matched_points.append(subimage_info_arr[index]['point'])
-        image = cv2.circle(image, subimage_info_arr[index]['point'], radius=10, color=(0, 0, 255),
-                               thickness=4)
+        image = cv2.circle(image, subimage_info_arr[index]['point'], radius=10, color=(0, 0, 255), thickness=4)
+
         # cv2.imshow('tmeplate', template)
         # cv2.imshow('matched image', subimage_info_arr[index]['image'])
         # cv2.waitKey()
@@ -420,6 +420,6 @@ def main_2():
 
 if __name__ == '__main__':
     start = time.clock()
-    main_2()
+    main()
     end = time.clock()
     print('finish all in %s' % str(end - start))
