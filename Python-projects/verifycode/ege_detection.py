@@ -2,6 +2,7 @@ import numpy as np
 import cv2 as cv
 import matplotlib.pyplot as plt
 from PIL import Image
+import verifycode.image_dbscan
 
 res_path = 'img/origin/'
 
@@ -41,10 +42,8 @@ def mser_text_detect(img):
 
 
 def canny__(img):
-    gray = cv.cvtColor(img, code=cv.COLOR_BGR2GRAY)
-    cv.imshow('gray', gray)
+    gray = verifycode.image_dbscan.get_gray(img)
     detected_edges = cv.GaussianBlur(gray, (3, 3), 0)
-    # detected_edges = gray
     detected_edges = cv.Canny(detected_edges, 120, 120 * 3, apertureSize=3)
     # just add some colours to edges from original image.
     # img = cv.bitwise_and(img, img, mask=detected_edges)
@@ -61,10 +60,8 @@ def laplace__(img):
 
 
 def do_ege_detect():
-    img = cv.imread(res_path + '003.jpg', flags=cv.IMREAD_COLOR)
-    img = canny__(img)
-    gray = cv.cvtColor(img, code=cv.COLOR_BGR2GRAY)
-
+    img = cv.imread(res_path + '009.bmp', flags=cv.IMREAD_COLOR)
+    gray = canny__(img)
     sub_image = gray[0:50, 230:gray.shape[1] - 10]
     cv.imwrite(res_path + 'sub_image_1.jpg', sub_image)
 

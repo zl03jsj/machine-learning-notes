@@ -16,9 +16,20 @@ ordered(age)
 score <- c(88, 85, 75, 97, 92, 77, 74, 70, 63, 97)
 cut(score, breaks = 3) 
 
+#  标准差计算函数
+standard_deviation <- function(samples) {
+  m <- mean(samples)
+  total <- 0
+  for( price in samples) {
+    total <- total + (price - m) ^ 2
+  }
+  return(total ^ (1/2))
+}
 
-fruit_class <- c("苹果","梨子","橘子","草莓","苹果","橘子","橘子","草莓","橘子","草莓")
+
+fruit_class <- c("苹果","梨子","橘子","草莓","苹果","橘子","橘子","草莓","橘子","草莓") 
 fruit_pricess <- c(3.5,2.5,1.5,5.5,4.2,3.2,2.8,4.8,2.9,5.8)
+
 
 # 计算水果平均价格(算术平均)
 tapply(fruit_pricess, fruit_class, mean)

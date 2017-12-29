@@ -146,7 +146,7 @@ def get_gray(image):
 def get_sift(img):
     gray = get_gray(img)
     surf = cv2.xfeatures2d.SURF_create()
-    kp, des =surf.detectAndCompute(gray, None)
+    kp, des = surf.detectAndCompute(gray, None)
     # fea_det = cv2.Feature2D_create('SIFT')
     # des_ext = cv2.DescriptorExtrator_create('SIFT')
     # keypoints = fea_det.detect(gray)
@@ -277,25 +277,26 @@ def get_most_match_image(tmplate, targets_arr):
             most_match_count = count
     return most_match_index
 
+
 def get_shape_match_rate(img1, img2):
-    originalGray = get_gray(img1)
-    drawnGray = get_gray(img2)
+    original_gray = get_gray(img1)
+    drawn_gray = get_gray(img2)
 
-    #apply erosion
-    kernel = np.ones((2, 2),np.uint8)
-    originalErosion = cv2.erode(originalGray, kernel, iterations = 1)
-    drawnErosion = cv2.erode(drawnGray, kernel, iterations = 1)
+    # apply erosion
+    kernel = np.ones((2, 2), np.uint8)
+    original_erosion = cv2.erode(original_gray, kernel, iterations=1)
+    drawn_erosion = cv2.erode(drawn_gray, kernel, iterations=1)
 
-    #retrieve edges with Canny
+    # retrieve edges with Canny
     thresh = 175
-    originalEdges = cv2.Canny(originalErosion, thresh, thresh*2)
-    drawnEdges = cv2.Canny(drawnErosion, thresh, thresh*2)
+    original_edges = cv2.Canny(original_erosion, thresh, thresh * 2)
+    drawn_edges = cv2.Canny(drawn_erosion, thresh, thresh * 2)
 
-    #extract contours
-    originalContours, Orighierarchy = cv2.findContours(originalEdges, cv2.cv.CV_RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
-    drawnContours, Drawnhierarchy = cv2.findContours(drawnEdges, cv2.cv.CV_RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
+    # extract contours
+    original_contours, orighierarchy = cv2.findContours(original_edges, cv2.cv.CV_RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
+    drawn_contours, drawnhierarchy = cv2.findContours(drawn_edges, cv2.cv.CV_RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
 
-    return cv2.matchShapes(drawnContours,originalContours,cv2.cv.CV_CONTOURS_MATCH_I1, 0.0)
+    return cv2.matchShapes(drawn_contours, original_contours, cv2.cv.CV_CONTOURS_MATCH_I1, 0.0)
 
 
 def main():
@@ -313,7 +314,6 @@ def main():
     #         do_templagte_match(traget_image, tmplate)
     # elif __commands__=='do featcher match':
     #     do_feather_match()
-
     points = make_points(gray_target)
     samples = StandardScaler().fit_transform(points)
 
@@ -352,13 +352,54 @@ def main():
     for template in gray_templates:
         index = get_most_match_image(template, subimage_info_arr)
         matched_points.append(subimage_info_arr[index]['point'])
-        origin_target = cv2.circle(origin_target, subimage_info_arr[index]['point'], radius=10, color=(0,0,255), thickness=4)
+        origin_target = cv2.circle(origin_target, subimage_info_arr[index]['point'], radius=10, color=(0, 0, 255),
+                                   thickness=4)
         cv2.imshow('image', origin_target)
         cv2.waitKey()
 
 
 def main_2():
+    image = cv2.imread('img/origin/009.bmp')
+    gray = cv2.cvtColor(image, code=cv2.COLOR_BGR2GRAY)
+    filter_image(gray)
+    points = make_points(gray)
+    samples = StandardScaler().fit_transform(points)
+
+    db = DBSCAN(eps=0.15, min_samples=7).fit(samples)
+
+    core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
+    core_samples_mask[db.core_sample_indices_] = True
+
+    labels = db.labels_
+    unique_labels = set(labels)
+    n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
+    points = np.array(points)
+    used_labels, cluster_boxs = filter_cluster(labels, points, gray.shape, 3)
+
+    gray = verifycode.ege_detection.canny__(gray)
+
+    tmplates, target = image51_split(gray)
+    subimage_info_arr = []
+
+    for box in cluster_boxs:
+        tmp_image = target[box[0][1]:box[1][1], box[0][0]:box[1][0]]
+        point = ((box[0][0] + box[1][0]) // 2, (box[0][1] + box[1][1]) // 2)
+        subimage_info_arr.append({'image': tmp_image, 'box': box, 'point': point})
+
+
+    target_points = []
+    for template in tmplates:
+        index = get_most_match_image(template, subimage_info_arr)
+        matched_points.append(subimage_info_arr[index]['point'])
+        origin_target = cv2.circle(origin_target, subimage_info_arr[index]['point'], radius=10, color=(0, 0, 255),
+                                   thickness=4)
+        cv2.imshow('image', origin_target)
+        cv2.waitKey()
+    cv2.imshow("ege detected image", gray)
+    cv2.waitKey()
+
     return
+
 
 if __name__ == '__main__':
     start = time.clock()
