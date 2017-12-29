@@ -97,7 +97,7 @@ def wav_get_hiden_message(wav_data, lmsg):
 
     utils.print_line('uncrypt chars begin')
     print interval
-    for i in xrange(0, len):
+    for i in range(0, len):
         if i%interval == 0:
             mesage.append(int((wav_data[i] + 64*base_amplitude)/base_amplitude))
             n += 1

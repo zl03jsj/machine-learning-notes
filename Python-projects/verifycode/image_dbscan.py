@@ -9,7 +9,6 @@ from sklearn.preprocessing import StandardScaler
 
 __commands__ = {1: 'template match', 2: 'feature match', 3: 'maching learning'}
 
-
 # %matplotlib inline
 
 def random_color():
@@ -279,24 +278,37 @@ def get_most_match_image(tmplate, targets_arr):
 
 
 def get_shape_match_rate(img1, img2):
-    original_gray = get_gray(img1)
-    drawn_gray = get_gray(img2)
+    cv2.imshow('image1', img1)
+    cv2.imshow('image2', img2)
+    cv2.waitKey()
 
-    # apply erosion
-    kernel = np.ones((2, 2), np.uint8)
-    original_erosion = cv2.erode(original_gray, kernel, iterations=1)
-    drawn_erosion = cv2.erode(drawn_gray, kernel, iterations=1)
+    gray1 = get_gray(img1)
+    gray2 = get_gray(img2)
 
-    # retrieve edges with Canny
-    thresh = 175
-    original_edges = cv2.Canny(original_erosion, thresh, thresh * 2)
-    drawn_edges = cv2.Canny(drawn_erosion, thresh, thresh * 2)
+    ret, thresh = cv2.threshold(gray1, 127, 255, 0)
+    ret, thresh2 = cv2.threshold(gray2, 127, 255, 0)
 
-    # extract contours
-    original_contours, orighierarchy = cv2.findContours(original_edges, cv2.cv.CV_RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
-    drawn_contours, drawnhierarchy = cv2.findContours(drawn_edges, cv2.cv.CV_RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
+    _, contours, hierarchy = cv2.findContours(thresh, 2, 1)
+    cnt1 = contours[0]
+    _, contours, hierarchy = cv2.findContours(thresh2, 2, 1)
+    cnt2 = contours[0]
 
-    return cv2.matchShapes(drawn_contours, original_contours, cv2.cv.CV_CONTOURS_MATCH_I1, 0.0)
+    ret = cv2.matchShapes(cnt1, cnt2, 1, 0.0)
+    # _, contours1, hierarchy1 = cv2.findContours(gray1, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
+    # _, contours2, hierarchy2 = cv2.findContours(gray2, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
+    # ret = cv2.matchShapes(contours1[0], contours2[0], cv2.CONTOURS_MATCH_I1, 0.0)
+    return ret
+
+def get_most_matched_shape(template, targets):
+    match_rate = 1000
+    matched_index = 0
+    for index, tgt in zip(np.arange(0, len(targets)), targets):
+        rate = get_shape_match_rate(template, tgt['image'])
+        print('match rage', rate)
+        if rate < match_rate:
+            match_rate = rate
+            matched_index = index
+    return matched_index
 
 
 def main():
@@ -305,6 +317,8 @@ def main():
 
     gray = cv2.cvtColor(image, code=cv2.COLOR_BGR2GRAY)
     filter_image(gray)
+    cv2.imshow('image', gray)
+    cv2.waitKey()
 
     gray_templates, gray_target = image51_split(gray)
     # cv2.imshow('gray', gray)
@@ -328,19 +342,19 @@ def main():
     points = np.array(points)
 
     used_labels, cluster_boxs = filter_cluster(labels, points, gray_target.shape, 3)
-    # cv2.imshow('gray_target', gray_target)
-    # cv2.waitKey()
+    cv2.imshow('gray_target', gray_target)
+    cv2.waitKey()
     # 这里是把聚类绘制出来...
-    # colors = [random_color() for _ in np.arange(n_clusters_)]
-    # colors = plt.cm.Spectral(np.linspace(0, 1, len(unique_labels)))
-    # for k, c in zip(unique_labels, colors):
-    #     if k not in used_labels: continue
-    #     class_member_mask = (labels == k)
-    #     xy = points[class_member_mask]
-    #     plt.plot(xy[:, 1], -xy[:, 0], '*', color=c)
-    #
-    # plt.title('Estimated number of clusters: %d' % n_clusters_)
-    # plt.show()
+    colors = [random_color() for _ in np.arange(n_clusters_)]
+    colors = plt.cm.Spectral(np.linspace(0, 1, len(unique_labels)))
+    for k, c in zip(unique_labels, colors):
+        if k not in used_labels: continue
+        class_member_mask = (labels == k)
+        xy = points[class_member_mask]
+        plt.plot(xy[:, 1], -xy[:, 0], '*', color=c)
+
+    plt.title('Estimated number of clusters: %d' % n_clusters_)
+    plt.show()
 
     subimage_info_arr = []
     for box in cluster_boxs:
@@ -360,13 +374,18 @@ def main():
 
 def main_2():
     image = cv2.imread('img/origin/009.bmp')
+    cv2.imshow('original image', image)
+
     gray = cv2.cvtColor(image, code=cv2.COLOR_BGR2GRAY)
     filter_image(gray)
-    points = make_points(gray)
+
+    _, image = image51_split(image)
+
+    gray_templates, gray_targets = image51_split(gray)
+    points = make_points(gray_targets)
+
     samples = StandardScaler().fit_transform(points)
-
     db = DBSCAN(eps=0.15, min_samples=7).fit(samples)
-
     core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
     core_samples_mask[db.core_sample_indices_] = True
 
@@ -374,35 +393,34 @@ def main_2():
     unique_labels = set(labels)
     n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
     points = np.array(points)
-    used_labels, cluster_boxs = filter_cluster(labels, points, gray.shape, 3)
 
-    gray = verifycode.ege_detection.canny__(gray)
+    used_labels, cluster_boxs = filter_cluster(labels, points, gray_targets.shape, 3)
 
-    tmplates, target = image51_split(gray)
+    # eged_gray = verifycode.ege_detection.canny__(gray_targets)
+
     subimage_info_arr = []
-
     for box in cluster_boxs:
-        tmp_image = target[box[0][1]:box[1][1], box[0][0]:box[1][0]]
+        tmp_image = gray_targets[box[0][1]:box[1][1], box[0][0]:box[1][0]]
         point = ((box[0][0] + box[1][0]) // 2, (box[0][1] + box[1][1]) // 2)
         subimage_info_arr.append({'image': tmp_image, 'box': box, 'point': point})
 
+    matched_points = []
 
-    target_points = []
-    for template in tmplates:
-        index = get_most_match_image(template, subimage_info_arr)
+    for template in gray_templates:
+        index = get_most_matched_shape(template, subimage_info_arr)
         matched_points.append(subimage_info_arr[index]['point'])
-        origin_target = cv2.circle(origin_target, subimage_info_arr[index]['point'], radius=10, color=(0, 0, 255),
-                                   thickness=4)
-        cv2.imshow('image', origin_target)
-        cv2.waitKey()
-    cv2.imshow("ege detected image", gray)
-    cv2.waitKey()
+        image = cv2.circle(image, subimage_info_arr[index]['point'], radius=10, color=(0, 0, 255), thickness=4)
 
-    return
+        # cv2.imshow('tmeplate', template)
+        # cv2.imshow('matched image', subimage_info_arr[index]['image'])
+        # cv2.waitKey()
+
+    cv2.imshow('image', image)
+    cv2.waitKey()
 
 
 if __name__ == '__main__':
     start = time.clock()
-    main_2()
+    main()
     end = time.clock()
     print('finish all in %s' % str(end - start))
