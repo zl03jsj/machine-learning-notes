@@ -1,0 +1,5 @@
+Coursera | Andrew Ng (01-week-2-2.7&2.8)—计算图&计算图的导数计算
+http://blog.csdn.net/JUNJUN_ZHAO/article/details/78897414
+
+机器学习简介 — 动手学深度学习
+http://zh.gluon.ai/chapter_crashcourse/introduction.html

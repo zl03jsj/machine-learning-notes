@@ -32,9 +32,9 @@ def create_samples(num_inputs, num_examples, params):
     w = params[0]
     b = params[1]
     # x = nd.random_normal(shape=(num_examples, num_inputs), loc=2, scale=0.1)
-    x = nd.random_normal(shape=(num_examples, num_inputs), loc=2, scale=1)
+    x = nd.random_normal(shape=(num_examples, num_inputs))
     y = w[0] * x[:, 0] + w[1] * x[:, 1] + b
-    y += (0.01 * nd.random_normal(shape=y.shape))
+    y += (0.001 * nd.random_normal(shape=y.shape))
     # plt.subplot(131)
     # plt.scatter(x[:, 0].asnumpy(), x[:, 1].asnumpy())
     # plt.subplot(132)
@@ -98,7 +98,7 @@ def main():
     for param in params:
         param.attach_grad()
 
-    epochs = 1000
+    epochs = 5
     learning_rate = .001
     niter = 0
     losses = []
@@ -129,7 +129,7 @@ def main():
             # correct the bias from the moving averages
             est_loss = moving_loss / (1 - (1 - smoothing_constant) ** niter)
 
-            if (niter + 1) % 200 == 0:
+            if (niter + 1) % 100 == 0:
                 losses.append(est_loss)
                 print("Epoch %s, batch %s. Moving avg of loss: %s. Average loss: %f" % (
                     e, niter, est_loss, total_loss / num_examples))
