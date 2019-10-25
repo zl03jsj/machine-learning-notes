@@ -114,7 +114,7 @@ def do_image_magic(img, f):
 
     print '-----------do_image_magic-----------'
 
-def transporion_image(img):
+def transpose_image(img):
     w = img.shape[1]
     h = img.shape[0]
     tmp_image = np.zeros((w, h, 3), np.uint8)
@@ -122,7 +122,7 @@ def transporion_image(img):
         tmp_image[i, 0:h, :] = img[0:h, i, :]
     return tmp_image
 
-def fusion_image(img1, img2):
+def fuse_image(img1, img2):
     w = min(img1.shape[1], img2.shape[1])
     h = min(img1.shape[0], img2.shape[1])
     for x in range(0, w, 1):
@@ -133,9 +133,9 @@ imagefile = "lenna.jpg"
 image = cv2.imread(imagefile)
 cityimage = cv2.imread("city.jpg")
 
-tmpimage = transporion_image(image)
+tmpimage = transpose_image(image)
 
-# fusion_image(image, cityimage)
+# fuse_image(image, cityimage)
 
 # cv2.imshow("magic image", cityimage)
 i = 1
