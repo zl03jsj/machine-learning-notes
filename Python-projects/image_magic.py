@@ -67,17 +67,17 @@ def multiple_sum(f, sub_img):
 
 
 def do_image_magic(img, f):
-    print '-----------do_image_magic-----------'
+    print ('-----------do_image_magic-----------')
 
-    print 'img shape = ', img.shape
-    print 'filter cub shape = ', f.shape
-    print  f
+    print ('img shape = '), img.shape
+    print ('filter cub shape = ', f.shape)
+    print (f)
 
     if f.shape[0]!=f.shape[1] or 0==(f.shape[0] % 2):
-        print "filter cub shape can not be even,should be odd number!!!!"
+        print ("filter cub shape can not be even,should be odd number!!!!")
         return
 
-    r = f.shape[0]/2
+    r = int(f.shape[0]/2)
 
     tmp = np.zeros((img.shape[0] * (r+1), 3), dtype=np.uint8).reshape(img.shape[0], r+1,  3)
     tx = 0
@@ -112,7 +112,7 @@ def do_image_magic(img, f):
     for x in np.arange(img.shape[1]-r, img.shape[1]):
         img[0:img.shape[0], x, :] = tmp[0:tmp.shape[0], img.shape[1]-x, :]
 
-    print '-----------do_image_magic-----------'
+    print ('-----------do_image_magic-----------')
 
 def transporion_image(img):
     w = img.shape[1]
